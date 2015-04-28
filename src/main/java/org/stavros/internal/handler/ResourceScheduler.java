@@ -1,35 +1,110 @@
 package org.stavros.internal.handler;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
-public class ResourceScheduler {
+import javax.inject.Inject;
+
+import org.stavros.external.gateway.interfaces.Gateway;
+import org.stavros.external.gateway.interfaces.Message;
+
+public class ResourceScheduler implements Runnable {
 	
-	private Configuration configuration;
-	public final Configuration getConfiguration() {
-		return this.configuration;
+	ResourceScheduler(int resources) {
+		this.resources = resources;
+		this.queue = Collections.synchronizedList(new ArrayList<Message>());
 	}
 	
-	private Map<PriorityGroup,List<InternalMessage>> convertIntoMap(InternalMessage...messages) {
-		Map<PriorityGroup, List<InternalMessage>> messagesMap = new HashMap<>();
-		
-		for (InternalMessage message: messages) {
-			List<InternalMessage> list = messagesMap.get(message.getPriorityGroup());
-			list.add(message);
+	private int resources;
+	protected int getResources() {
+		return this.resources;
+	}
+	
+	private List<Message> queue;
+	protected List<Message> getQueue() {
+		return this.queue;
+	}
+	
+	public void send(Message msg) {
+		getQueue().add(msg);
+	}
+	
+	private boolean stopped;
+	public void stop() {
+		this.stopped = true;
+	}
+	public boolean isStopped() {
+		return this.stopped;
+	}
+	
+	private int currentGroup;
+	protected int getCurrentGroup() {
+		return this.currentGroup;
+	}
+	protected void setCurrentGroup(int currentGroup) {
+		this.currentGroup = currentGroup;
+	}
+	
+	@Inject
+	private Gateway gateway;
+	protected Gateway getGateway() {
+		return gateway;
+	}
+	
+	protected List<Message> getMessagesOfCurrentGroup() {
+		List<Message> messages = new ArrayList<>();
+		synchronized (getQueue()) {
+			Iterator<Message> iter = getQueue().iterator();
+			while (iter.hasNext()) {
+				Message msg = iter.next();
+				if (msg.getGroupId() == getCurrentGroup()) {
+					messages.add(msg);
+					iter.remove();
+				}
+				if (messages.size() == getResources()) {
+					break;
+				}
+			}
 		}
 		
-		return messagesMap;
+		return messages;
 	}
 	
-	public void send(InternalMessage...messages) {
-		Map<PriorityGroup, List<InternalMessage>> messagesMap = convertIntoMap(messages);
+	protected List<Message> getMessagesToSend() {
+		List<Message> messagesToSend = new ArrayList<>();
 		
-		send(messagesMap);
+		while (getQueue().size() > 0
+				&& messagesToSend.size() < getResources()) {
+			List<Message> messagesOfCurrentGroup = getMessagesOfCurrentGroup();
+			if (messagesOfCurrentGroup.size() == 0) {
+				setCurrentGroup(getQueue().get(0).getGroupId());
+			}
+			messagesToSend.addAll(messagesOfCurrentGroup);
+		}
+		
+		return messagesToSend;
 	}
 	
-	public void send(Map<PriorityGroup,List<InternalMessage>> messagesMap) {
-		
+	private void forward() {
+		for(Message message: getMessagesToSend()) {
+			getGateway().send(message);
+		}
+	}
+
+	@Override
+	public void run() {
+		while (!isStopped()) {
+			forward();
+			
+			try {
+				Thread.sleep(100);
+			}
+			catch(InterruptedException ie) {
+				
+			}
+		}
 	}
 
 }

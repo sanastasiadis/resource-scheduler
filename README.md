@@ -1,2 +1,14 @@
 # resource-scheduler
 Resource Scheduler
+
+The API should be simple offering a single "send" method taking a Message interface as a parameter.
+The purpose of the send method is to add objects to the queue, and while adding, a forwarding thread should also be active.
+
+Start a thread
+Considering that the "send" method of the Gateway is blocking, while the user of the resource scheduler should be able to add
+messages to the queue, the creation of a thread is inevitable. The user of the resource scheduler should start the thread as a normal thread. In order to stop the thread, to exit the endless loop, an isStopped boolean value is used.
+
+Forwarding messages
+In every iteration of the thread loop, a set of messages with as many messages as the configured number of resources is selected.
+The priority model is based on messages with the same group id, and in the order of arrival (FIFO).
+

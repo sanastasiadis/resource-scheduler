@@ -7,13 +7,13 @@ import java.util.List;
 import javax.inject.Inject;
 
 import org.stavros.external.gateway.interfaces.Gateway;
-import org.stavros.external.gateway.interfaces.Message;
+import org.stavros.internal.handler.interfaces.InternalMessage;
 
 public abstract class AbstractResourceScheduler implements Runnable {
 	
 	AbstractResourceScheduler(int resources) {
 		this.resources = resources;
-		this.queue = Collections.synchronizedList(new ArrayList<Message>());
+		this.queue = Collections.synchronizedList(new ArrayList<InternalMessage>());
 	}
 	
 	private int resources;
@@ -21,12 +21,12 @@ public abstract class AbstractResourceScheduler implements Runnable {
 		return this.resources;
 	}
 	
-	private List<Message> queue;
-	protected List<Message> getQueue() {
+	private List<InternalMessage> queue;
+	protected List<InternalMessage> getQueue() {
 		return this.queue;
 	}
 	
-	public void send(Message msg) {
+	public void send(InternalMessage msg) {
 		getQueue().add(msg);
 	}
 	
@@ -44,10 +44,10 @@ public abstract class AbstractResourceScheduler implements Runnable {
 		return gateway;
 	}
 	
-	protected abstract List<Message> getMessagesToSend();
+	protected abstract List<InternalMessage> getMessagesToSend();
 	
 	private void forward() {
-		for(Message message: getMessagesToSend()) {
+		for(InternalMessage message: getMessagesToSend()) {
 			getGateway().send(message);
 		}
 	}

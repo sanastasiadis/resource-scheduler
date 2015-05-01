@@ -1,24 +1,29 @@
 package org.stavros.internal.handler;
 
-import org.stavros.external.gateway.interfaces.Message;
+import org.stavros.internal.handler.interfaces.InternalMessage;
+import org.stavros.internal.handler.interfaces.MessageType;
 
-public class MyMessage implements Message {
+public class MyMessage implements InternalMessage {
 	
-	public MyMessage(int groupId, String code, int delayMillis) {
+	public MyMessage(MessageType messageType, String groupId, String code, int delayMillis) {
+		this.messageType = messageType;
 		this.groupId = groupId;
 		this.code = code;
 		this.delayMillis = delayMillis;
 	}
 	
-	public MyMessage(int groupId, String code) {
-		this(groupId, code, 1000);
+	public MyMessage(MessageType messageType, String groupId, String code) {
+		this(messageType, groupId, code, 1000);
 	}
 	
-	private int groupId;
+	public MyMessage(String groupId, String code) {
+		this(MessageType.DEFAULT, groupId, code, 1000);
+	}
+	
+	private String groupId;
 
 	@Override
-	public int getGroupId() {
-		// TODO Auto-generated method stub
+	public String getGroupId() {
 		return this.groupId;
 	}
 
@@ -40,6 +45,12 @@ public class MyMessage implements Message {
 	private int delayMillis;
 	public int getDelayMillis() {
 		return this.delayMillis;
+	}
+
+	private MessageType messageType;
+	@Override
+	public MessageType getMessageType() {
+		return this.messageType;
 	}
 
 }

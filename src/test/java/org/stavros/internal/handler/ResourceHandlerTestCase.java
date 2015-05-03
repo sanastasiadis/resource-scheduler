@@ -1,18 +1,17 @@
 package org.stavros.internal.handler;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
 import org.junit.Test;
-import org.stavros.external.gateway.interfaces.Message;
 import org.stavros.internal.handler.interfaces.InternalMessage;
 
 public class ResourceHandlerTestCase {
 	
 	@Test
 	public void testNoResource2messages() {
-		ResourceScheduler rs = new ResourceScheduler(0);
+		ResourceScheduler rs = new ResourceScheduler(new MyGateway(), 0);
 		rs.send(new MyMessage("1", "ID1"));
 		rs.send(new MyMessage("1", "ID2"));
 		
@@ -22,7 +21,7 @@ public class ResourceHandlerTestCase {
 	
 	@Test
 	public void testSingleResource1message() {
-		ResourceScheduler rs = new ResourceScheduler(1);
+		ResourceScheduler rs = new ResourceScheduler(new MyGateway(), 1);
 		rs.send(new MyMessage("1", "ID1"));
 		
 		assertEquals(rs.getQueue().size(), 1);
@@ -30,7 +29,7 @@ public class ResourceHandlerTestCase {
 	
 	@Test
 	public void testSingleResource2messages() {
-		ResourceScheduler rs = new ResourceScheduler(1);
+		ResourceScheduler rs = new ResourceScheduler(new MyGateway(), 1);
 		rs.send(new MyMessage("1", "ID1"));
 		rs.send(new MyMessage("1", "ID2"));
 		
@@ -43,7 +42,7 @@ public class ResourceHandlerTestCase {
 	
 	@Test
 	public void testDoubleResource2messages() {
-		ResourceScheduler rs = new ResourceScheduler(2);
+		ResourceScheduler rs = new ResourceScheduler(new MyGateway(), 2);
 		rs.send(new MyMessage("1", "ID1"));
 		rs.send(new MyMessage("1", "ID2"));
 		
@@ -54,7 +53,7 @@ public class ResourceHandlerTestCase {
 	
 	@Test
 	public void testSingleResource3messages() {
-		ResourceScheduler rs = new ResourceScheduler(1);
+		ResourceScheduler rs = new ResourceScheduler(new MyGateway(), 1);
 		rs.send(new MyMessage("1", "ID1"));
 		rs.send(new MyMessage("2", "ID2"));
 		rs.send(new MyMessage("1", "ID3"));
@@ -71,7 +70,7 @@ public class ResourceHandlerTestCase {
 	
 	@Test
 	public void testDoubleResource3messages() {
-		ResourceScheduler rs = new ResourceScheduler(2);
+		ResourceScheduler rs = new ResourceScheduler(new MyGateway(), 2);
 		rs.send(new MyMessage("1", "ID1"));
 		rs.send(new MyMessage("2", "ID2"));
 		rs.send(new MyMessage("1", "ID3"));
@@ -86,7 +85,7 @@ public class ResourceHandlerTestCase {
 	
 	@Test
 	public void testTripleResource3messages() {
-		ResourceScheduler rs = new ResourceScheduler(3);
+		ResourceScheduler rs = new ResourceScheduler(new MyGateway(), 3);
 		rs.send(new MyMessage("1", "ID1"));
 		rs.send(new MyMessage("2", "ID2"));
 		rs.send(new MyMessage("1", "ID3"));
@@ -99,7 +98,7 @@ public class ResourceHandlerTestCase {
 	
 	@Test
 	public void testTripleResource4messages() {
-		ResourceScheduler rs = new ResourceScheduler(3);
+		ResourceScheduler rs = new ResourceScheduler(new MyGateway(), 3);
 		rs.send(new MyMessage("1", "ID1"));
 		rs.send(new MyMessage("2", "ID2"));
 		rs.send(new MyMessage("1", "ID3"));
@@ -116,7 +115,7 @@ public class ResourceHandlerTestCase {
 	
 	@Test
 	public void testTripleResource4messages3groups() {
-		ResourceScheduler rs = new ResourceScheduler(3);
+		ResourceScheduler rs = new ResourceScheduler(new MyGateway(), 3);
 		rs.send(new MyMessage("1", "ID1"));
 		rs.send(new MyMessage("2", "ID2"));
 		rs.send(new MyMessage("3", "ID3"));
@@ -133,7 +132,7 @@ public class ResourceHandlerTestCase {
 	
 	@Test
 	public void testQuadResource4messages3groups() {
-		ResourceScheduler rs = new ResourceScheduler(4);
+		ResourceScheduler rs = new ResourceScheduler(new MyGateway(), 4);
 		rs.send(new MyMessage("1", "ID1"));
 		rs.send(new MyMessage("2", "ID2"));
 		rs.send(new MyMessage("3", "ID3"));
@@ -148,7 +147,7 @@ public class ResourceHandlerTestCase {
 	
 	@Test
 	public void testQuadResource0messages() {
-		ResourceScheduler rs = new ResourceScheduler(4);
+		ResourceScheduler rs = new ResourceScheduler(new MyGateway(), 4);
 		
 		List<InternalMessage> messagesToSend1 = rs.getMessagesToSend();
 		assertEquals(0, messagesToSend1.size());

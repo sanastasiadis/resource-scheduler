@@ -7,5 +7,7 @@ public interface InternalMessage extends Message {
 	String getGroupId();
 	
 	MessageType getMessageType();
+	
+	String getCode();
 
 }

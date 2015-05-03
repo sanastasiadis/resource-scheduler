@@ -12,7 +12,7 @@ public class TerminationTestCase {
 	
 	@Test
 	public void testSingleResource2messages() {
-		ResourceScheduler rs = new ResourceScheduler(1);
+		ResourceScheduler rs = new ResourceScheduler(new MyGateway(), 1);
 		rs.send(new MyMessage("1", "ID1"));
 		rs.send(new MyMessage(MessageType.TERMINATION, "1", "ID2"));
 		
@@ -28,7 +28,7 @@ public class TerminationTestCase {
 	
 	@Test
 	public void testSingleResource1group() {
-		ResourceScheduler rs = new ResourceScheduler(1);
+		ResourceScheduler rs = new ResourceScheduler(new MyGateway(), 1);
 		rs.send(new MyMessage("1", "ID1"));
 		rs.send(new MyMessage(MessageType.TERMINATION, "1", "ID2"));
 		try {
@@ -51,7 +51,7 @@ public class TerminationTestCase {
 	
 	@Test
 	public void testSingleResource2groups() {
-		ResourceScheduler rs = new ResourceScheduler(1);
+		ResourceScheduler rs = new ResourceScheduler(new MyGateway(), 1);
 		rs.send(new MyMessage("1", "ID1"));
 		rs.send(new MyMessage(MessageType.TERMINATION, "1", "ID2"));
 		rs.send(new MyMessage("2", "ID3"));
@@ -71,7 +71,7 @@ public class TerminationTestCase {
 	
 	@Test
 	public void testSingleResource3groupsTerminations() {
-		ResourceScheduler rs = new ResourceScheduler(1);
+		ResourceScheduler rs = new ResourceScheduler(new MyGateway(), 1);
 		rs.send(new MyMessage("1", "ID1"));
 		rs.send(new MyMessage(MessageType.TERMINATION, "1", "ID2"));
 		rs.send(new MyMessage("2", "ID3"));

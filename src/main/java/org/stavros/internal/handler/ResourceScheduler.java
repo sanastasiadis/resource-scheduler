@@ -1,51 +1,35 @@
 package org.stavros.internal.handler;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.stavros.external.gateway.interfaces.Gateway;
 import org.stavros.internal.handler.interfaces.InternalMessage;
-import org.stavros.internal.handler.interfaces.MessageType;
 
-public class ResourceScheduler extends AbstractResourceScheduler {
+/**
+ * This class subclasses the asynchronous gateway and immediately forwards message to it.
+ * Send method of the gateway is not considered blocking.
+ * 
+ * @author stavros
+ *
+ */
+public class ResourceScheduler extends AsynchronousGateway {
 	
 	private final static Logger LOGGER = LogManager.getLogger(ResourceScheduler.class);
 	
-	ResourceScheduler(int resources) {
-		super(resources);
-		setAvailableResources(resources);
-		this.cancelledGroups = new HashSet<>();
-		this.terminatedGroups = new HashSet<>();
-	}
-	
 	/**
-	 * Check if the message group has been:
-	 * 1. cancelled, and do not send the message
-	 * 2. terminated, and throw an exception
-	 * If this is a termination message then add it to the terminated message groups.
-	 * Finally, call the method send() of the superclass
+	 * Constructor getting the available resources number configuration
+	 * and the instance of gateway to send the asynchronous messages to.
+	 * @param gateway the instance of gateway to use to send messages to.
+	 * @param resources the configuration of available resources.
 	 */
-	@Override
-	public void send(InternalMessage message) {
-		if (getCancelledGroups().contains(message.getGroupId())) {
-			// this message group has been cancelled, it will not be sent to the Gateway
-			LOGGER.error("A message of group ID: " + message.getGroupId() + ", has been received while this group has been canceled");
-			return;
-		}
-		if (getTerminatedGroups().contains(message.getGroupId())) {
-			// this message group has been terminated. This is an error state
-			LOGGER.error("A message of group ID: " + message.getGroupId() + ", has been received while a termination message has been received for this group");
-			throw new IllegalStateException("Tried to send a message of group: " + message.getGroupId() + ", while this message group is already terminated");
-		}
-		if (message.getMessageType().equals(MessageType.TERMINATION)) {
-			// this is a termination message, add this group to the set of terminated group IDs
-			addTerminatedGroup(message.getGroupId());
-		}
-		super.send(message);
+	ResourceScheduler(Gateway gateway, int resources) {
+		super(gateway);
+		this.resources = resources;
+		setAvailableResources(resources);
 	}
 	
 	/**
@@ -68,6 +52,18 @@ public class ResourceScheduler extends AbstractResourceScheduler {
 	}
 	
 	/**
+	 * the configured number of resources in full, the number of available resources should be smaller than this number
+	 */
+	private int resources;
+	/**
+	 * Get the configured number of resources
+	 * @return the configured number of resources
+	 */
+	public int getResources() {
+		return resources;
+	}
+
+	/**
 	 * the number of available resources is critical for the resource handler
 	 * to select the number of queued messages to send to the gateway
 	 */
@@ -76,21 +72,18 @@ public class ResourceScheduler extends AbstractResourceScheduler {
 	 * Get the number of available resources
 	 * @return the number of available resources
 	 */
-	protected int getAvailableResources() {
+	public int getAvailableResources() {
 		return this.availableResources;
 	}
 	/**
 	 * Set the number of available resources
 	 * @param availableResources the number of available resources
 	 */
-	protected void setAvailableResources(int availableResources) {
-		this.availableResources = availableResources;
-	}
 	/**
 	 * Allocate a resource, subtract 1 from the number of available resources
 	 * @throws IllegalStateException if the available resources are already 0 or a negative number
 	 */
-	protected void allocateResource() {
+	public void allocateResource() {
 		if (getAvailableResources() <= 0) {
 			throw new IllegalStateException("Tried to allocate a resource when no resource was available");
 		}
@@ -102,50 +95,15 @@ public class ResourceScheduler extends AbstractResourceScheduler {
 	 * @throws IllegalStateException if the available resources are
 	 * already equal or more than the configured number of resources
 	 */
-	protected void releaseResource() {
+	public void releaseResource() {
 		if (getAvailableResources() >= getResources()) {
 			throw new IllegalStateException("Tried to release when more that all the resources are available");
 		}
 		this.availableResources++;
 		LOGGER.debug("Released a resource. Available resources: " + getAvailableResources());
 	}
-	
-	/**
-	 * this is the set to hold the cancelled groups to filter-out future messages
-	 */
-	private Set<String> cancelledGroups;
-	/**
-	 * Get the set of the cancelled group IDs
-	 * @return the set of the cancelled group IDs
-	 */
-	public Set<String> getCancelledGroups() {
-		return this.cancelledGroups;
-	}
-	/**
-	 * Add a group Id into the set of the cancelled group IDs
-	 * @param groupId the group ID to cancel
-	 */
-	public void addCancelledGroup(String groupId) {
-		this.cancelledGroups.add(groupId);
-	}
-	
-	/**
-	 * this is the set to hold the terminated groups to filter-out future messages
-	 */
-	private Set<String> terminatedGroups;
-	/**
-	 * Get the set of the terminated group IDs
-	 * @return the set of the terminated group IDs
-	 */
-	public Set<String> getTerminatedGroups() {
-		return this.terminatedGroups;
-	}
-	/**
-	 * Add a group ID into the set of the terminated group IDs.
-	 * @param groupId the group ID to terminate
-	 */
-	private void addTerminatedGroup(String groupId) {
-		this.terminatedGroups.add(groupId);
+	public void setAvailableResources(int availableResources) {
+		this.availableResources = availableResources;
 	}
 	
 	/**
@@ -177,7 +135,6 @@ public class ResourceScheduler extends AbstractResourceScheduler {
 	 * from the queue messages of the current group ID, or changing the current group ID
 	 * when more available resources exist
 	 */
-	@Override
 	protected List<InternalMessage> getMessagesToSend() {
 		List<InternalMessage> messagesToSend = new ArrayList<>();
 		
